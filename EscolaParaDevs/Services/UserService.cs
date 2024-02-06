@@ -1,6 +1,8 @@
 ﻿using EscolaParaDevs.Entities;
 using EscolaParaDevs.Helpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
+using BC = BCrypt.Net.BCrypt;
 
 namespace EscolaParaDevs.Services
 {
@@ -24,12 +26,17 @@ namespace EscolaParaDevs.Services
         }
         public async Task<User> Create(User user)
         {
+            if (!user.PassWord.Equals(user.ConfirmPassword))
+                throw new Exception("Password does not match ConfirmPassword");
+
             User userDb = await _context.Users
                 .AsNoTracking()
                .SingleOrDefaultAsync(x => x.UserName == user.UserName);
 
             if(userDb is not null)             
                 throw new Exception($"UserName{user.UserName} already exist");
+
+            user.PassWord = BC.HashPassword(user.PassWord);
                 
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
@@ -67,12 +74,20 @@ namespace EscolaParaDevs.Services
             if(userIn.Id != id)
                 throw new Exception("Route id is differs User id");
 
+            else if (!userIn.PassWord.Equals(userIn.ConfirmPassword))
+                throw new Exception("Password does not match ConfirmPassword");
+
             User userDb = await _context.Users
                 .AsNoTracking()
                 .SingleOrDefaultAsync(x => x.Id == id);
 
             if (userDb is null)
                 throw new Exception($"User {id} not found");
+            else if (!BC.Verify(userIn.CurrentPassword, userDb.PassWord))
+                throw new Exception("Incorrect Password");
+
+            userIn.CreatedAt = userDb.CreatedAt;
+            userIn.PassWord = BC.HashPassword(userIn.PassWord);
 
             _context.Users.Update(userIn).State = EntityState.Modified;
             await _context.SaveChangesAsync();

@@ -55,19 +55,21 @@ namespace EscolaParaDevs.Services
             return coursesDb;
         }
 
-        public async Task Update(Course noteIn, int id)
+        public async Task Update(Course courseIn, int id)
         {
-            if (noteIn.Id != id)
+            if (courseIn.Id != id)
                 throw new Exception("Route id is differs Note id");
 
-            Course noteDb = await _context.Courses
+            Course courseDb = await _context.Courses
                 .AsNoTracking()
                 .SingleOrDefaultAsync(x => x.Id == id);
 
-            if (noteDb is null)
+            if (courseDb is null)
                 throw new Exception($"Note {id} not found");
 
-            _context.Entry(noteIn).State = EntityState.Modified;
+            courseIn.CreatedAt = courseDb.CreatedAt;
+
+            _context.Entry(courseIn).State = EntityState.Modified;
             await _context.SaveChangesAsync();
         }
     }

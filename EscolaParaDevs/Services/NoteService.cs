@@ -67,6 +67,8 @@ namespace EscolaParaDevs.Services
             if (noteDb is null)
                 throw new Exception($"Note {id} not found");
 
+            noteIn.CreatedAt = noteDb.CreatedAt;
+
             _context.Entry(noteIn).State = EntityState.Modified;
             await _context.SaveChangesAsync();
         }
