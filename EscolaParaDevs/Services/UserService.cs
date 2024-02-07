@@ -1,4 +1,5 @@
 ﻿using EscolaParaDevs.Entities;
+using EscolaParaDevs.Exceptions;
 using EscolaParaDevs.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
@@ -27,23 +28,21 @@ namespace EscolaParaDevs.Services
         public async Task<User> Create(User user)
         {
             if (!user.PassWord.Equals(user.ConfirmPassword))
-                throw new Exception("Password does not match ConfirmPassword");
+                throw new BadRequestException("Password does not match ConfirmPassword");
 
             User userDb = await _context.Users
                 .AsNoTracking()
                .SingleOrDefaultAsync(x => x.UserName == user.UserName);
 
             if(userDb is not null)             
-                throw new Exception($"UserName{user.UserName} already exist");
+                throw new BadRequestException($"UserName{user.UserName} already exist");
 
             user.PassWord = BC.HashPassword(user.PassWord);
                 
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                return user;
-            
-            throw new NotImplementedException();
+                return user;            
         }
 
         public async Task Delete(int id)
@@ -51,7 +50,7 @@ namespace EscolaParaDevs.Services
             User userDb = await _context.Users.SingleOrDefaultAsync(x => x.Id == id);
 
             if (userDb is null)
-                throw new Exception($"User {id} not found");
+                throw new KeyNotFoundException($"User {id} not found");
 
             _context.Users.Remove(userDb);
             await _context.SaveChangesAsync();
@@ -64,7 +63,7 @@ namespace EscolaParaDevs.Services
             User userDb = await _context.Users.SingleOrDefaultAsync(x => x.Id == id);
 
             if (userDb is null)
-                throw new Exception($"User {id} not found");
+                throw new KeyNotFoundException($"User {id} not found");
 
             return userDb;
         }
@@ -72,19 +71,19 @@ namespace EscolaParaDevs.Services
         public async Task Update(User userIn, int id)
         {
             if(userIn.Id != id)
-                throw new Exception("Route id is differs User id");
+                throw new BadRequestException("Route id is differs User id");
 
             else if (!userIn.PassWord.Equals(userIn.ConfirmPassword))
-                throw new Exception("Password does not match ConfirmPassword");
+                throw new BadRequestException("Password does not match ConfirmPassword");
 
             User userDb = await _context.Users
                 .AsNoTracking()
                 .SingleOrDefaultAsync(x => x.Id == id);
 
             if (userDb is null)
-                throw new Exception($"User {id} not found");
+                throw new KeyNotFoundException($"User {id} not found");
             else if (!BC.Verify(userIn.CurrentPassword, userDb.PassWord))
-                throw new Exception("Incorrect Password");
+                throw new BadRequestException("Incorrect Password");
 
             userIn.CreatedAt = userDb.CreatedAt;
             userIn.PassWord = BC.HashPassword(userIn.PassWord);

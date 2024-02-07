@@ -1,4 +1,5 @@
 ﻿using EscolaParaDevs.Entities;
+using EscolaParaDevs.Exceptions;
 using EscolaParaDevs.Helpers;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,8 +29,6 @@ namespace EscolaParaDevs.Services
             await _context.SaveChangesAsync();
 
             return note;
-
-            throw new NotImplementedException();
         }
 
         public async Task Delete(int id)
@@ -37,7 +36,7 @@ namespace EscolaParaDevs.Services
             Note noteDb = await _context.Notes.SingleOrDefaultAsync(x => x.Id == id);
 
             if (noteDb is null)
-                throw new Exception($"Note {id} not found");
+                throw new KeyNotFoundException($"Note {id} not found");
 
             _context.Notes.Remove(noteDb);
             await _context.SaveChangesAsync();
@@ -50,7 +49,7 @@ namespace EscolaParaDevs.Services
             Note noteDb = await _context.Notes.SingleOrDefaultAsync(x => x.Id == id);
 
             if (noteDb is null)
-                throw new Exception($"Note {id} not found");
+                throw new KeyNotFoundException($"Note {id} not found");
 
             return noteDb;
         }
@@ -58,14 +57,14 @@ namespace EscolaParaDevs.Services
         public async Task Update(Note noteIn, int id)
         {
             if (noteIn.Id != id)
-                throw new Exception("Route id is differs Note id");
+                throw new BadRequestException("Route id is differs Note id");
 
             Note noteDb = await _context.Notes
                 .AsNoTracking()
                 .SingleOrDefaultAsync(x => x.Id == id);
 
             if (noteDb is null)
-                throw new Exception($"Note {id} not found");
+                throw new KeyNotFoundException($"Note {id} not found");
 
             noteIn.CreatedAt = noteDb.CreatedAt;
 
